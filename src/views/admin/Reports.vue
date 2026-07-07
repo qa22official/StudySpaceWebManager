@@ -81,7 +81,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getUsageReport } from '@/api/reports'; // 确保路径正确
+import { ElMessage } from 'element-plus';
+import { getUsageReport } from '@/api/reports';
 
 // 初始化日期：默认最近7天
 const initDate = () => {
@@ -105,18 +106,17 @@ const getRateClass = (rate) => {
 
 const handleSearch = async () => {
   if (!query.value.start_date || !query.value.end_date) {
-    alert("请选择完整的日期范围");
+    ElMessage.warning('请选择完整的日期范围');
     return;
   }
 
   loading.value = true;
   try {
     const res = await getUsageReport(query.value);
-    // 兼容处理：拦截器可能解包了 data，也可能没解包
     reports.value = res.data?.data || res.data || [];
   } catch (error) {
-    console.error("报表获取失败:", error);
-    alert("数据加载失败，请稍后重试");
+    console.error('报表获取失败:', error);
+    ElMessage.error('数据加载失败，请稍后重试');
     reports.value = [];
   } finally {
     loading.value = false;

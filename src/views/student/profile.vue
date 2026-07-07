@@ -70,7 +70,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePasswordChange">确认修改</el-button>
+          <el-button type="primary" @click="handlePasswordChange" :loading="submitting">确认修改</el-button>
         </div>
       </template>
     </el-dialog>
@@ -78,33 +78,66 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { changeStudentPassword } from '@/api/auth'
 
-// 模拟数据（实际逻辑中这里会从 localStorage 或 Pinia 获取）
+// 从 localStorage 读取真实用户数据
 const userInfo = reactive({
-  id: '20260001',
-  name: '张三',
-  college: '信息学院',
-  major: '软件工程',
+  id: '',
+  name: '',
+  college: '',
+  major: '',
   status: 'active',
   violation_count: 0
 })
 
+onMounted(() => {
+  try {
+    const stored = localStorage.getItem('user_info')
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      Object.assign(userInfo, parsed)
+    }
+  } catch (e) {
+    console.error('读取用户信息失败:', e)
+  }
+})
+
 const dialogVisible = ref(false)
+const submitting = ref(false)
 const form = reactive({
   oldPass: '',
   newPass: ''
 })
 
-// 处理密码修改逻辑
-const handlePasswordChange = () => {
+// 处理密码修改
+const handlePasswordChange = async () => {
   if (!form.oldPass || !form.newPass) {
-    // 简单的校验提示
-    return alert('请填写完整密码信息')
+    ElMessage.warning('请填写完整密码信息')
+    return
   }
-  console.log('提交修改密码:', form)
-  // TODO: 调用后端 API 修改密码
-  dialogVisible.value = false
+  if (form.newPass.length < 6) {
+    ElMessage.warning('新密码长度不能少于6位')
+    return
+  }
+
+  submitting.value = true
+  try {
+    await changeStudentPassword({
+      old_password: form.oldPass,
+      new_password: form.newPass
+    })
+    ElMessage.success('密码修改成功')
+    dialogVisible.value = false
+    form.oldPass = ''
+    form.newPass = ''
+  } catch (error) {
+    const msg = error.response?.data?.message || '密码修改失败'
+    ElMessage.error(msg)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

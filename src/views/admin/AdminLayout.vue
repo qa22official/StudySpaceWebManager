@@ -18,10 +18,19 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
+
 const router = useRouter();
-const logout = () => { 
-  localStorage.clear(); 
-  router.push('/login'); 
+const logout = async () => {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定退出',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    localStorage.clear();
+    router.push('/login');
+  } catch { /* 用户取消 */ }
 };
 </script>
 
@@ -64,7 +73,9 @@ const logout = () => {
 .sidebar a.router-link-active {
   font-weight: 600;
   color: #3E2723;
-  /* 移除左侧标识符，严格保持左对齐 */
+  background: rgba(255, 255, 255, 0.5);
+  border-left: 3px solid #5D4037;
+  padding-left: 13px;
 }
 
 .logout-item {

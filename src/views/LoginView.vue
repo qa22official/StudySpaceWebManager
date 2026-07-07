@@ -57,7 +57,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-// 引入刚才写好的 API 接口
+import { ElMessage } from 'element-plus';
 import { studentLogin, adminLogin } from '../api/auth.js'; 
 
 const router = useRouter();
@@ -85,41 +85,32 @@ const handleLogin = async () => {
 
   try {
     let res;
-    // 根据选择的角色调用不同的接口
     if (role.value === 'admin') {
-      // 构造管理员需要的数据格式 { admin_id, password }
-      res = await adminLogin({ 
-        admin_id: form.id, 
-        password: form.password 
-      });
+      res = await adminLogin({ admin_id: form.id, password: form.password });
     } else {
-      // 构造学生需要的数据格式 { student_id, password }
-      res = await studentLogin({ 
-        student_id: form.id, 
-        password: form.password 
-      });
+      res = await studentLogin({ student_id: form.id, password: form.password });
     }
-    
-    // 假设后端返回结构为 { code: 200, data: { access_token, role, user... } }
-    const responseData = res.data.data || res.data; 
 
-    // 保存 Token 和 信息
+    const responseData = res.data?.data || res.data || {};
     localStorage.setItem('access_token', responseData.access_token);
-    localStorage.setItem('role', responseData.role || role.value); // 优先用后端的，没有就用本地的
-    localStorage.setItem('user_info', JSON.stringify(responseData.user || {}));
+    const userRole = responseData.role || role.value;
+    localStorage.setItem('role', userRole);
 
-    // 路由跳转
-    if (responseData.role === 'admin' || role.value === 'admin') {
-      router.push('/admin/students');
+    if (responseData.user || responseData.student || responseData.admin) {
+      const user = responseData.user || responseData.student || responseData.admin || {};
+      localStorage.setItem('user_info', JSON.stringify(user));
+    }
+
+    if (userRole === 'admin') {
+      router.push('/admin/dashboard');
     } else {
       router.push('/student/profile');
     }
-
   } catch (err) {
-    console.error(err);
-    // 简单的错误处理
+    console.error('登录失败:', err);
     const msg = err.response?.data?.message || '登录失败，请检查账号密码';
     error.value = msg;
+    ElMessage.error(msg);
   } finally {
     loading.value = false;
   }

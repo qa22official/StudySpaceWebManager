@@ -61,7 +61,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// 引入 API
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { getBlacklist, removeBlacklist } from '../../api/student';
 
 const blacklist = ref([]);
@@ -72,11 +72,10 @@ const fetchBlacklist = async () => {
   loading.value = true;
   try {
     const res = await getBlacklist();
-    // 确保取值安全
     blacklist.value = res.data?.data || [];
   } catch (error) {
     console.error('获取黑名单失败:', error);
-    alert('获取黑名单列表失败');
+    ElMessage.error('获取黑名单列表失败');
   } finally {
     loading.value = false;
   }
@@ -84,19 +83,21 @@ const fetchBlacklist = async () => {
 
 // 解除黑名单
 const handleRemove = async (studentId) => {
-  // 修正：提示信息中使用 studentId
-  if (!confirm(`确定要解除学号为 ${studentId} 的学生黑名单状态吗？`)) return;
+  try {
+    await ElMessageBox.confirm(
+      `确定要解除学号为 ${studentId} 的学生黑名单状态吗？`,
+      '确认解除',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    );
+  } catch { return; }
 
   try {
-    // 传入 studentId (即 student_id)
     await removeBlacklist(studentId);
-    alert('解除成功！该学生已恢复正常状态。');
-    fetchBlacklist(); // 刷新列表
+    ElMessage.success('解除成功！该学生已恢复正常状态。');
+    fetchBlacklist();
   } catch (error) {
-    console.error(error);
-    // 尝试获取后端返回的错误信息
     const msg = error.response?.data?.message || '解除失败，请稍后重试';
-    alert(msg);
+    ElMessage.error(msg);
   }
 };
 

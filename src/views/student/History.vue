@@ -75,67 +75,45 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import { ElMessage } from 'element-plus';
 import { getReservations } from '@/api/reservation';
 
-export default {
-  name: 'StudentHistory',
-  data() {
-    return {
-      loading: false,
-      // 初始化日期为今天，格式必须是 YYYY-MM-DD
-      queryParams: {
-        date: new Date().toISOString().split('T')[0],
-        status: '' 
-      },
-      reservationList: []
-    };
-  },
-  mounted() {
-    this.fetchData();
-  },
-  methods: {
-    async fetchData() {
-      this.loading = true;
-      try {
-        // 过滤掉空字符串的参数，避免发送 ?status=
-        const params = {};
-        if (this.queryParams.date) params.date = this.queryParams.date;
-        if (this.queryParams.status) params.status = this.queryParams.status;
+const loading = ref(false);
+const queryParams = reactive({
+  date: new Date().toISOString().split('T')[0],
+  status: ''
+});
+const reservationList = ref([]);
 
-        const res = await getReservations(params);
-        
-        // 假设后端返回结构为 { code: 0, data: [...] }
-        // 如果后端直接返回数组，请改为 this.reservationList = res.data || res;
-        this.reservationList = res.data || []; 
-        
-      } catch (error) {
-        console.error("获取历史失败", error);
-        this.reservationList = []; // 出错时也清空，防止显示旧数据
-      } finally {
-        this.loading = false;
-      }
-    },
-    handleSearch() {
-      this.fetchData();
-    },
-    // 状态文本映射 (严格对应文档注释)
-    getStatusText(status) {
-      const map = {
-        'active': '待签到',
-        'checked_in': '使用中',
-        'cancelled': '已取消',
-        'no_show': '未签到',
-        'released': '已释放'
-      };
-      return map[status] || status;
-    },
-    // 状态样式映射
-    getStatusClass(status) {
-      return `status-${status}`;
-    }
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    const params = {};
+    if (queryParams.date) params.date = queryParams.date;
+    if (queryParams.status) params.status = queryParams.status;
+    const res = await getReservations(params);
+    reservationList.value = res.data?.data || res.data || [];
+  } catch (error) {
+    console.error('获取历史失败:', error);
+    ElMessage.error('获取预约历史失败');
+    reservationList.value = [];
+  } finally {
+    loading.value = false;
   }
 };
+
+const handleSearch = () => { fetchData(); };
+
+const getStatusText = (status) => {
+  const map = { active:'待签到', checked_in:'使用中', cancelled:'已取消', no_show:'未签到', released:'已释放' };
+  return map[status] || status;
+};
+
+const getStatusClass = (status) => { return `status-${status}`; };
+
+onMounted(() => { fetchData(); });
 </script>
 
 <style scoped>

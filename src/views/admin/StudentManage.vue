@@ -1,111 +1,128 @@
 <template>
   <div class="page-container">
-    <div class="header-actions">
-      <h2>学生管理</h2>
-      <div class="btn-group">
-        <!-- 黑名单跳转按钮 -->
-        <router-link to="/admin/blacklist">
-          <button class="btn-warning">黑名单管理</button>
-        </router-link>
-        <button @click="openAddModal" class="btn-primary">添加学生</button>
+    <!-- 顶部标题栏 -->
+    <div class="page-header">
+      <div class="header-left">
+        <h2 class="page-title">学生管理</h2>
+        <p class="page-subtitle">管理自习室学生账号与权限</p>
+      </div>
+      <div class="header-right">
+        <el-button @click="$router.push('/admin/blacklist')" type="warning" :icon="WarningFilled">
+          黑名单管理
+        </el-button>
+        <el-button @click="openAddModal" type="primary" :icon="Plus">添加学生</el-button>
       </div>
     </div>
 
     <!-- 搜索栏 -->
-    <div class="search-bar">
-      <input 
-        v-model="keyword" 
-        placeholder="输入姓名或学号搜索..." 
+    <div class="search-card">
+      <el-input
+        v-model="keyword"
+        placeholder="输入姓名或学号搜索..."
+        clearable
         @keyup.enter="fetchStudents"
-      />
-      <button @click="fetchStudents">搜索</button>
+        @clear="fetchStudents"
+        class="search-input"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+      <el-button @click="fetchStudents" type="primary" :icon="Search">搜索</el-button>
     </div>
 
-    <!-- 表格 -->
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>学号</th>
-          <th>姓名</th>
-          <th>学院</th>
-          <th>专业</th>
-          <th>状态</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in students" :key="item.id">
-          <td>{{ item.id }}</td>
-          <td>{{ item.name }}</td>
-          <td>{{ item.college }}</td>
-          <td>{{ item.major }}</td>
-          <td>
-            <span :class="['status-tag', item.status === 'active' ? 'active' : 'disabled']">
-              {{ item.status === 'active' ? '正常' : '禁用' }}
-            </span>
-          </td>
-          <td>
-            <button @click="openEditModal(item)" class="btn-sm">编辑</button>
-            <button @click="handleDelete(item.id)" class="btn-sm danger">删除</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- 弹窗 (添加/编辑) -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal-content">
-        <h3>{{ isEditMode ? '修改学生信息' : '添加新学生' }}</h3>
-        <form @submit.prevent="handleSubmit">
-          <div class="form-item">
-            <label>学号</label>
-            <input v-model="form.id" :disabled="isEditMode" required placeholder="例如：20260001" />
-          </div>
-          <div class="form-item">
-            <label>姓名</label>
-            <input v-model="form.name" required />
-          </div>
-          <div class="form-item">
-            <label>密码 {{ isEditMode ? '(留空则不修改)' : '' }}</label>
-            <input v-model="form.password" :required="!isEditMode" type="password" />
-          </div>
-          <div class="form-item">
-            <label>学院</label>
-            <input v-model="form.college" />
-          </div>
-          <div class="form-item">
-            <label>专业</label>
-            <input v-model="form.major" />
-          </div>
-          <div class="form-item">
-            <label>状态</label>
-            <select v-model="form.status">
-              <option value="active">正常 (Active)</option>
-              <option value="disabled">禁用 (Disabled)</option>
-            </select>
-          </div>
-          
-          <div class="modal-footer">
-            <button type="button" @click="showModal = false">取消</button>
-            <button type="submit" class="btn-primary">保存</button>
-          </div>
-        </form>
-      </div>
+    <!-- 数据表格 -->
+    <div class="table-card">
+      <el-table :data="students" stripe border style="width: 100%" v-loading="tableLoading">
+        <el-table-column prop="id" label="学号" width="140" />
+        <el-table-column prop="name" label="姓名" width="120" />
+        <el-table-column prop="college" label="学院" min-width="160" />
+        <el-table-column prop="major" label="专业" min-width="180" />
+        <el-table-column label="状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'danger'" effect="plain" size="small">
+              {{ row.status === 'active' ? '正常' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160" align="center">
+          <template #default="{ row }">
+            <el-button @click="openEditModal(row)" type="primary" link size="small">编辑</el-button>
+            <el-button @click="handleDelete(row.id)" type="danger" link size="small">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
+
+    <!-- 添加/编辑弹窗 -->
+    <el-dialog
+      v-model="showModal"
+      :title="isEditMode ? '修改学生信息' : '添加新学生'"
+      width="520px"
+      :close-on-click-modal="false"
+      destroy-on-close
+    >
+      <el-form :model="form" label-position="top" @submit.prevent="handleSubmit">
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="学号">
+              <el-input v-model="form.id" :disabled="isEditMode" placeholder="例如：20260001" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="姓名">
+              <el-input v-model="form.name" placeholder="请输入姓名" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item :label="isEditMode ? '密码 (留空则不修改)' : '密码'">
+          <el-input
+            v-model="form.password"
+            type="password"
+            show-password
+            :placeholder="isEditMode ? '留空则不修改密码' : '请输入密码'"
+          />
+        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="学院">
+              <el-input v-model="form.college" placeholder="请输入学院" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="专业">
+              <el-input v-model="form.major" placeholder="请输入专业" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="状态">
+          <el-select v-model="form.status" style="width: 100%">
+            <el-option label="正常 (Active)" value="active" />
+            <el-option label="禁用 (Disabled)" value="disabled" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showModal = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// 引入刚才定义的 API
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { Search, Plus, WarningFilled } from '@element-plus/icons-vue';
 import { getStudents, addStudent, updateStudent, deleteStudent } from '../../api/student';
 
 const students = ref([]);
 const keyword = ref('');
 const showModal = ref(false);
 const isEditMode = ref(false);
+const tableLoading = ref(false);
+const submitLoading = ref(false);
 
-// 表单数据模型，严格对应文档字段
 const form = ref({
   id: '',
   name: '',
@@ -115,59 +132,80 @@ const form = ref({
   status: 'active'
 });
 
-// 获取列表
 const fetchStudents = async () => {
+  tableLoading.value = true;
   try {
     const res = await getStudents({ keyword: keyword.value });
-    // 假设后端返回结构为 { code: 200, data: [...] }
-    students.value = res.data.data || [];
+    students.value = res.data?.data || [];
   } catch (error) {
     console.error('获取学生列表失败:', error);
+    ElMessage.error('获取学生列表失败');
+  } finally {
+    tableLoading.value = false;
   }
 };
 
-// 打开添加弹窗
 const openAddModal = () => {
   isEditMode.value = false;
   form.value = { id: '', name: '', password: '', college: '', major: '', status: 'active' };
   showModal.value = true;
 };
 
-// 打开编辑弹窗
 const openEditModal = (item) => {
   isEditMode.value = true;
-  // 复制对象，避免直接修改表格数据
-  form.value = { ...item, password: '' }; 
+  form.value = {
+    id: item.id || '',
+    name: item.name || '',
+    password: '',
+    college: item.college || '',
+    major: item.major || '',
+    status: item.status || 'active'
+  };
   showModal.value = true;
 };
 
-// 提交保存
 const handleSubmit = async () => {
+  const payload = { ...form.value };
+
+  if (isEditMode.value) {
+    if (!payload.password) delete payload.password;
+  } else {
+    if (!payload.password) {
+      ElMessage.warning('请输入密码');
+      return;
+    }
+  }
+
+  submitLoading.value = true;
   try {
     if (isEditMode.value) {
-      // PATCH /admin/students/{id}
-      await updateStudent(form.value.id, form.value);
+      await updateStudent(payload.id, payload);
     } else {
-      // POST /admin/students
-      await addStudent(form.value);
+      await addStudent(payload);
     }
     showModal.value = false;
-    fetchStudents(); // 刷新列表
-    alert(isEditMode.value ? '修改成功' : '添加成功');
+    fetchStudents();
+    ElMessage.success(isEditMode.value ? '修改成功' : '添加成功');
   } catch (error) {
-    alert(error.response?.data?.message || '操作失败');
+    ElMessage.error(error.response?.data?.message || '操作失败');
+  } finally {
+    submitLoading.value = false;
   }
 };
 
-// 删除学生
 const handleDelete = async (id) => {
-  if (!confirm('确定要删除该学生吗？如果有未结束预约将无法删除。')) return;
-  
+  try {
+    await ElMessageBox.confirm('确定要删除该学生吗？如果有未结束预约将无法删除。', '警告', {
+      confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning'
+    });
+  } catch { return; }
+
   try {
     await deleteStudent(id);
+    ElMessage.success('删除成功');
     fetchStudents();
   } catch (error) {
-    alert(error.response?.data?.message || '删除失败');
+    ElMessage.error(error.response?.data?.message || '删除失败');
   }
 };
 
@@ -177,30 +215,56 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 简单样式，保持页面整洁 */
-.page-container { padding: 20px; }
-.header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.btn-group { display: flex; gap: 10px; }
-.search-bar { margin-bottom: 20px; display: flex; gap: 10px; }
-.search-bar input { padding: 8px; width: 300px; border: 1px solid #ddd; border-radius: 4px; }
+.page-container {
+  padding: 24px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 60px);
+}
 
-.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-.data-table th, .data-table td { border: 1px solid #eee; padding: 12px; text-align: left; }
-.data-table th { background-color: #f8f9fa; }
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
 
-.status-tag.active { color: green; font-weight: bold; }
-.status-tag.disabled { color: red; }
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 4px 0;
+}
 
-.btn-sm { padding: 4px 8px; cursor: pointer; margin-right: 5px; }
-.danger { background-color: #ffebeb; color: red; border: 1px solid red; border-radius: 4px; }
-.btn-primary { background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-.btn-warning { background-color: #ffc107; color: black; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; }
+.page-subtitle {
+  font-size: 13px;
+  color: #909399;
+  margin: 0;
+}
 
-/* 弹窗样式 */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { background: white; padding: 30px; border-radius: 8px; width: 500px; }
-.form-item { margin-bottom: 15px; display: flex; flex-direction: column; }
-.form-item label { margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
-.form-item input, .form-item select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.header-right {
+  display: flex;
+  gap: 10px;
+}
+
+.search-card {
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  max-width: 360px;
+}
+
+.table-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
 </style>

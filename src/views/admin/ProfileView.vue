@@ -55,6 +55,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
 
 const router = useRouter();
 
@@ -89,9 +90,16 @@ onMounted(() => {
 });
 
 // 退出登录逻辑
-const handleLogout = () => {
-  localStorage.clear();
-  router.push('/login');
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定退出',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    localStorage.clear();
+    router.push('/login');
+  } catch { /* 用户取消 */ }
 };
 </script>
 

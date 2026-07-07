@@ -31,11 +31,11 @@
         <div class="card-body">
           <div class="info-row">
             <span class="label">自习室：</span>
-            <span class="value highlight">{{ item.room_id }}</span>
+            <span class="value highlight">{{ getRoomName(item.room_id) }}</span>
           </div>
           <div class="info-row">
             <span class="label">座位号：</span>
-            <span class="value highlight">{{ item.seat_id }}</span>
+            <span class="value highlight">{{ getSeatLabel(item.seat_id) }}</span>
           </div>
           <div class="info-row">
             <span class="label">时间段：</span>
@@ -88,34 +88,48 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-// ✅ 引入封装好的 API，保持代码整洁
-import { getReservations, checkInReservation, cancelReservation } from '@/api/reservation'; 
+import { getReservations, checkInReservation, cancelReservation } from '@/api/reservation';
+import { getAllRooms } from '@/api/dashboard';
 
 const loading = ref(false);
 const reservations = ref([]);
+const roomMap = ref({});
 
-// 取消预约相关的响应式数据
 const cancelDialogVisible = ref(false);
 const currentCancelId = ref(null);
-const cancelForm = ref({ reason: '临时有事' }); // 默认给一个值，防止空
+const cancelForm = ref({ reason: '临时有事' });
 const submitting = ref(false);
 
-// 获取预约列表
+const loadRoomNames = async () => {
+  try {
+    const res = await getAllRooms();
+    const rooms = res.data?.data || res.data || [];
+    const map = {};
+    rooms.forEach((r) => { map[r.id] = r.name || r.id; });
+    roomMap.value = map;
+  } catch (e) { console.error('加载自习室名称失败:', e); }
+};
+
+const getRoomName = (roomId) => roomMap.value[roomId] || roomId;
+const getSeatLabel = (seatId) => {
+  if (!seatId) return '-';
+  const parts = seatId.split('_seat_');
+  return parts.length > 1 ? parts[1] : seatId;
+};
+
 const fetchReservations = async () => {
   loading.value = true;
   try {
-    // ✅ 使用 API 函数
     const res = await getReservations({ status: 'active' });
-    
-    // 兼容处理：确保拿到数组
     let list = [];
-    if (res.data && Array.isArray(res.data)) {
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      list = res.data.data;
+    } else if (res.data && Array.isArray(res.data)) {
       list = res.data;
     } else if (Array.isArray(res)) {
       list = res;
     }
     reservations.value = list;
-
   } catch (error) {
     console.error('获取预约失败:', error);
     ElMessage.error('加载预约信息失败');
@@ -170,7 +184,7 @@ const confirmCancel = async () => {
 };
 
 onMounted(() => {
-  fetchReservations();
+  loadRoomNames().then(() => fetchReservations());
 });
 </script>
 

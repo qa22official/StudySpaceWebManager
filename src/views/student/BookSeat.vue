@@ -35,21 +35,14 @@
     <!-- 2. 时间与操作栏 -->
     <div class="action-bar" v-if="selectedRoom">
       <div class="time-picker">
-        <input type="date" v-model="query.date" @change="fetchSeats" />
+        <input type="date" v-model="query.date" :min="today" @change="fetchSeats" />
         <span> ~ </span>
-        <select v-model="query.start_time" @change="fetchSeats">
-          <option value="08:00">08:00</option>
-          <option value="09:00">09:00</option>
-          <option value="10:00">10:00</option>
-          <option value="14:00">14:00</option>
+        <select v-model="query.start_time" @change="onStartTimeChange">
+          <option v-for="t in allTimeSlots" :key="t" :value="t">{{ t }}</option>
         </select>
         <span> 至 </span>
         <select v-model="query.end_time" @change="fetchSeats">
-          <option value="10:00">10:00</option>
-          <option value="11:00">11:00</option>
-          <option value="12:00">12:00</option>
-          <option value="17:00">17:00</option>
-          <option value="22:00">22:00</option>
+          <option v-for="t in filteredEndTimes" :key="t" :value="t">{{ t }}</option>
         </select>
       </div>
       
@@ -124,9 +117,20 @@ const seats = ref([]);
 const selectedSeatId = ref(null);
 const isBlacklisted = ref(false);
 
+// 当天日期，禁止选择过去
+const today = new Date().toISOString().split('T')[0];
+
+// 所有可选时间段
+const allTimeSlots = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+
+// 结束时间必须晚于开始时间
+const filteredEndTimes = computed(() =>
+  allTimeSlots.filter(t => t > query.value.start_time)
+);
+
 // 查询参数
 const query = ref({
-  date: new Date().toISOString().split('T')[0],
+  date: today,
   start_time: '08:00',
   end_time: '10:00'
 });
@@ -205,6 +209,15 @@ const handleBuildingChange = () => {
   seats.value = [];
 };
 
+// 开始时间变化时自动修正结束时间
+const onStartTimeChange = () => {
+  if (query.value.end_time <= query.value.start_time) {
+    const idx = allTimeSlots.indexOf(query.value.start_time);
+    query.value.end_time = allTimeSlots[idx + 1] || allTimeSlots[allTimeSlots.length - 1];
+  }
+  fetchSeats();
+};
+
 // 3. 获取座位数据
 const fetchSeats = async () => {
   if (!selectedRoom.value) return;
@@ -258,6 +271,11 @@ const submitReservation = async () => {
     return;
   }
 
+  if (query.value.start_time >= query.value.end_time) {
+    ElMessage.warning('开始时间必须早于结束时间');
+    return;
+  }
+
   try {
     const payload = {
       room_id: selectedRoom.value,
@@ -267,7 +285,6 @@ const submitReservation = async () => {
       end_time: query.value.end_time
     };
     console.log('createReservation payload:', payload);
-    // 登录检查
     const token = localStorage.getItem('access_token');
     if (!token) {
       ElMessage.error('请先登录再预约');
@@ -311,6 +328,8 @@ const checkUserBlacklist = async () => {
 };
 
 onMounted(() => {
+  // 每次进入页面时重置日期为当天
+  query.value.date = new Date().toISOString().split('T')[0];
   loadBaseData();
   checkUserBlacklist();
 });

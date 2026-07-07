@@ -17,3 +17,12 @@ export function adminLogin(data) {
     data: data
   });
 }
+
+// 学生修改密码 (PATCH /auth/student/password)
+export function changeStudentPassword(data) {
+  return request({
+    url: '/auth/student/password',
+    method: 'patch',
+    data: data
+  });
+}

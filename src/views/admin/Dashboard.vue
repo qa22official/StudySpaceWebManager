@@ -21,7 +21,7 @@
 
         <div class="filter-group">
           <label>查看日期：</label>
-          <input type="date" v-model="selectedDate" class="form-input" />
+          <input type="date" v-model="selectedDate" class="form-input" @change="fetchHeatmap" />
         </div>
       </div>
     </div>
@@ -105,8 +105,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
-// 假设你有这些 API，如果没有请替换为你真实的路径
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ElMessage } from 'element-plus';
 import { getAllRooms, getRoomHeatmap } from '@/api/dashboard'; 
 
 // --- 状态定义 ---
@@ -139,76 +139,69 @@ const groupedSeats = computed(() => {
   });
 });
 
-// --- 辅助函数 ---
+// --- 辅助函数：状态值映射 (API 返回字符串状态) ---
 const getSeatClass = (status) => {
-  // status: 0-空闲, 1-占用, 2-维护 (根据你的API定义调整)
-  if (status === 1) return 'is-taken';
-  if (status === 2) return 'is-maintenance';
+  if (status === 'occupied') return 'is-taken';
+  if (status === 'maintenance') return 'is-maintenance';
   return 'is-free';
 };
 
 const getStatusText = (status) => {
-  const map = { 0: '空闲', 1: '已占用', 2: '维护中' };
+  const map = { available: '空闲', occupied: '已占用', maintenance: '维护中' };
   return map[status] || '未知';
-};
-
-const updateStats = () => {
-  const list = seats.value;
-  stats.total = list.length;
-  stats.occupied = list.filter(s => s.status === 1).length;
-  stats.available = list.filter(s => s.status === 0).length;
-  stats.rate = stats.total ? ((stats.occupied / stats.total) * 100).toFixed(1) : '0.0';
 };
 
 // --- 数据获取 ---
 const fetchRooms = async () => {
   try {
-    // 模拟数据，实际请调用 API
-    // const res = await getStudyRooms();
-    // rooms.value = res.data;
-    
-    // 临时模拟数据用于展示效果
-    rooms.value = [
-      { id: 101, name: '德望图书馆三楼自习室' },
-      { id: 102, name: '文科楼A座阅览室' }
-    ];
-    if (rooms.value.length) selectedRoomId.value = rooms.value[0].id;
-  } catch (e) { console.error(e); }
+    const res = await getAllRooms();
+    const list = res.data?.data || res.data || [];
+    rooms.value = list;
+    if (rooms.value.length) {
+      selectedRoomId.value = rooms.value[0].id;
+    }
+  } catch (e) {
+    console.error('获取自习室列表失败:', e);
+    ElMessage.error('获取自习室列表失败');
+  }
 };
 
-const fetchSeats = async () => {
+const fetchHeatmap = async () => {
   if (!selectedRoomId.value) return;
   loading.value = true;
   try {
-    // 模拟 API 调用
-    // const res = await getSeatStatus(selectedRoomId.value, selectedDate.value);
-    // seats.value = res.data;
-    
-    // 临时模拟生成多行座位数据
-    const mockData = [];
-    for(let r=1; r<=4; r++) { // 4排
-      for(let c=1; c<=6; c++) { // 每排6个
-        mockData.push({
-          id: `${r}-${c}`,
-          seatNo: `${r}-${c}`,
-          row: r,
-          col: c,
-          status: Math.random() > 0.7 ? 1 : 0 // 随机占用
-        });
-      }
-    }
-    seats.value = mockData;
-    updateStats();
-  } catch (e) { console.error(e); } finally {
+    const res = await getRoomHeatmap(selectedRoomId.value, selectedDate.value);
+    const payload = res.data?.data || res.data || {};
+    stats.total = payload.total_seats || 0;
+    stats.occupied = payload.occupied_seats || 0;
+    stats.available = payload.available_seats || 0;
+    stats.rate = stats.total
+      ? ((stats.occupied / stats.total) * 100).toFixed(1)
+      : '0.0';
+
+    const heatmap = payload.heatmap || [];
+    seats.value = heatmap.map((s) => ({
+      id: s.seat_id,
+      seatNo: s.code,
+      row: s.row,
+      col: s.col,
+      status: s.status
+    }));
+  } catch (e) {
+    console.error('获取热力图失败:', e);
+    ElMessage.error('获取热力图数据失败');
+    seats.value = [];
+  } finally {
     loading.value = false;
   }
 };
 
-const handleRoomChange = () => fetchSeats();
+const handleRoomChange = () => fetchHeatmap();
+
+watch(selectedDate, () => fetchHeatmap());
 
 onMounted(() => {
-  fetchRooms();
-  fetchSeats();
+  fetchRooms().then(() => fetchHeatmap());
 });
 </script>
 
