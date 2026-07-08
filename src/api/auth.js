@@ -25,6 +25,7 @@ export function changeStudentPassword(data) {
     method: 'patch',
     data: data
   });
+<<<<<<< HEAD
 }
 
 /**
@@ -36,4 +37,6 @@ export function getStudentProfile() {
     url: '/auth/student/profile',
     method: 'get'
   });
+=======
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 }

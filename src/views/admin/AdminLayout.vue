@@ -4,10 +4,13 @@
       <ul>
         <li><router-link to="/admin/students">学生管理</router-link></li>
         <li><router-link to="/admin/seats">座位管理</router-link></li>
+<<<<<<< HEAD
         
         <!-- ✅ 新增：预约记录菜单项 -->
         <li><router-link to="/admin/reservations">预约记录</router-link></li>
         
+=======
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
         <li><router-link to="/admin/dashboard">看板热力图</router-link></li>
         <li><router-link to="/admin/reports">统计报表</router-link></li>
         <li><router-link to="/admin/profile">个人中心</router-link></li>
@@ -39,7 +42,10 @@ const logout = async () => {
 </script>
 
 <style scoped>
+<<<<<<< HEAD
 /* ... 原有样式保持不变 ... */
+=======
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 .layout-container {
   display: flex;
   height: 100vh;
@@ -54,24 +60,43 @@ const logout = async () => {
 
 .sidebar ul {
   list-style: none;
+<<<<<<< HEAD
   padding: 0;
+=======
+  padding: 0; /* 移除左侧默认内边距 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
   margin: 0;
 }
 
 .sidebar li {
   margin-bottom: 14px;
+<<<<<<< HEAD
   padding-left: 8px;
   padding-right: 16px;
 }
 
+=======
+  padding-left: 8px; /* 关键：左侧仅保留8px呼吸空间 */
+  padding-right: 16px;
+}
+
+/* 所有链接左对齐实现 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 .sidebar a {
   display: block;
   color: #5D4037;
   text-decoration: none;
+<<<<<<< HEAD
   padding: 12px 16px 12px 8px;
   border-radius: 6px;
   transition: none;
   text-align: left;
+=======
+  padding: 12px 16px 12px 8px; /* 上右下左：左侧仅8px */
+  border-radius: 6px;
+  transition: none;
+  text-align: left; /* 显式声明左对齐 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 }
 
 .sidebar a.router-link-active {
@@ -85,7 +110,11 @@ const logout = async () => {
 .logout-item {
   color: #5D4037;
   cursor: pointer;
+<<<<<<< HEAD
   padding: 12px 16px 12px 8px;
+=======
+  padding: 12px 16px 12px 8px; /* 与链接保持一致 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
   border-radius: 6px;
   text-align: left;
 }

@@ -3,11 +3,19 @@
     <!-- 顶部标题 -->
     <header class="page-header">
       <h1>个人中心</h1>
+<<<<<<< HEAD
       <p class="subtitle">欢迎回来，{{ userInfo.name || '同学' }}</p>
     </header>
 
     <!-- 核心信息卡片 -->
     <el-card class="info-card" shadow="never" v-loading="loading">
+=======
+      <p class="subtitle">欢迎回来，{{ userInfo.name }}</p>
+    </header>
+
+    <!-- 核心信息卡片 -->
+    <el-card class="info-card" shadow="never">
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
       <template #header>
         <div class="card-header">
           <span>基本信息</span>
@@ -36,6 +44,7 @@
           <span class="value">{{ userInfo.major }}</span>
         </div>
 
+<<<<<<< HEAD
         <!-- 账号状态：根据 is_blacklisted 动态变化 -->
         <div class="info-row">
           <span class="label">账号状态</span>
@@ -59,6 +68,15 @@
           <span class="value">{{ formatTime(userInfo.blacklist_until) }}</span>
         </div>
 
+=======
+        <div class="info-row">
+          <span class="label">账号状态</span>
+          <el-tag size="small" effect="light" color="#FFF7ED" style="color: #ea580c; border-color: #fed7aa;">
+            {{ userInfo.status === 'active' ? '正常' : userInfo.status }}
+          </el-tag>
+        </div>
+
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
         <div class="info-row">
           <span class="label">违规次数</span>
           <span class="value">{{ userInfo.violation_count || 0 }} 次</span>
@@ -96,6 +114,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+<<<<<<< HEAD
 import { changeStudentPassword, getStudentProfile } from '@/api/auth' // 引入新接口
 
 const loading = ref(false)
@@ -103,12 +122,18 @@ const dialogVisible = ref(false)
 const submitting = ref(false)
 
 // 用户信息响应式对象
+=======
+import { changeStudentPassword } from '@/api/auth'
+
+// 从 localStorage 读取真实用户数据
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 const userInfo = reactive({
   id: '',
   name: '',
   college: '',
   major: '',
   status: 'active',
+<<<<<<< HEAD
   violation_count: 0,
   is_blacklisted: false,
   blacklist_reason: '',
@@ -149,6 +174,25 @@ onMounted(async () => {
   }
 })
 
+=======
+  violation_count: 0
+})
+
+onMounted(() => {
+  try {
+    const stored = localStorage.getItem('user_info')
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      Object.assign(userInfo, parsed)
+    }
+  } catch (e) {
+    console.error('读取用户信息失败:', e)
+  }
+})
+
+const dialogVisible = ref(false)
+const submitting = ref(false)
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 const form = reactive({
   oldPass: '',
   newPass: ''
@@ -167,7 +211,10 @@ const handlePasswordChange = async () => {
 
   submitting.value = true
   try {
+<<<<<<< HEAD
     // 调用 API 文档规定的接口
+=======
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
     await changeStudentPassword({
       old_password: form.oldPass,
       new_password: form.newPass
@@ -213,13 +260,21 @@ const handlePasswordChange = async () => {
 /* 卡片样式 - 浅橙色主题 */
 .info-card {
   border-radius: 12px;
+<<<<<<< HEAD
   border: 1px solid #ffedd5;
+=======
+  border: 1px solid #ffedd5; /* 极浅的橙色边框 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
   background-color: #fff;
 }
 
 .card-header span {
   font-weight: bold;
+<<<<<<< HEAD
   color: #9a3412;
+=======
+  color: #9a3412; /* 深橙色文字 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
   font-size: 16px;
 }
 
@@ -256,15 +311,22 @@ const handlePasswordChange = async () => {
 }
 
 .highlight-text {
+<<<<<<< HEAD
   color: #ea580c;
+=======
+  color: #ea580c; /* 橙色高亮学号 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
   font-family: monospace;
   font-size: 15px;
 }
 
+<<<<<<< HEAD
 .error-text {
   color: #dc2626;
 }
 
+=======
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 /* 按钮区域 */
 .action-area {
   margin-top: 30px;
@@ -275,6 +337,10 @@ const handlePasswordChange = async () => {
 
 .action-area .el-button {
   min-width: 120px;
+<<<<<<< HEAD
+=======
+  /* 覆盖 Element Plus 默认蓝色，改为橙色系 */
+>>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
   --el-color-primary: #ea580c; 
 }
 
