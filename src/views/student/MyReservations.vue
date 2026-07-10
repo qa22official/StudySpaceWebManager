@@ -23,7 +23,8 @@
       >
         <!-- 顶部状态条 -->
         <div class="card-header">
-          <span class="status-tag active">待使用</span>
+          <span class="status-tag active" v-if="item.status === 'active'">待签到</span>
+          <span class="status-tag checked-in" v-if="item.status === 'checked_in'">使用中</span>
           <span class="date">{{ item.date }}</span>
         </div>
 
@@ -45,12 +46,13 @@
 
         <!-- 底部操作区 -->
         <div class="card-footer">
-          <button class="btn btn-cancel" @click="openCancelDialog(item)">
+          <button v-if="item.status === 'active'" class="btn btn-cancel" @click="openCancelDialog(item)">
             取消预约
           </button>
-          <button class="btn btn-checkin" @click="handleCheckIn(item.id)">
+          <button v-if="item.status === 'active'" class="btn btn-checkin" @click="handleCheckIn(item.id)">
             立即签到
           </button>
+          <!-- 这里如果之后有签退功能，可以添加签退按钮，目前暂时只展示 -->
         </div>
       </div>
     </div>
@@ -120,7 +122,7 @@ const getSeatLabel = (seatId) => {
 const fetchReservations = async () => {
   loading.value = true;
   try {
-    const res = await getReservations({ status: 'active' });
+    const res = await getReservations({ status: 'active,checked_in' });
     let list = [];
     if (res.data?.data && Array.isArray(res.data.data)) {
       list = res.data.data;
@@ -196,6 +198,7 @@ onMounted(() => {
 .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; overflow: hidden; border: 1px solid #eee; }
 .card-header { background: #f8f9fa; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
 .status-tag.active { background: #e6f7ff; color: #1890ff; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+.status-tag.checked-in { background: #f6ffed; color: #52c41a; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 .date { color: #666; font-size: 14px; }
 
 .card-body { padding: 16px; }

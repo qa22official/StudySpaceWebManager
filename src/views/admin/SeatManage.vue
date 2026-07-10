@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 
 <template>
   <div class="page-container">
@@ -16,17 +15,6 @@
 </div>
 
    
-=======
-<template>
-  <div class="page-container">
-    <!-- 顶部标题栏 -->
-    <div class="page-header">
-      <div class="header-left">
-        <h2 class="page-title">座位管理</h2>
-        <p class="page-subtitle">管理自习室座位布局与维护状态</p>
-      </div>
-    </div>
->>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 
     <!-- 筛选栏 -->
     <div class="filter-card">
@@ -54,7 +42,6 @@
     </div>
 
     <!-- 自习室列表 -->
-<<<<<<< HEAD
     <div class="action-bar" style="margin:12px 0; display:flex; gap:10px;">
       <el-button type="primary" plain @click="openRoomModal()">新增自习室</el-button>
       <el-button type="success" plain @click="openAddBuildingModal">新增楼栋</el-button>
@@ -62,8 +49,6 @@
       <el-button type="warning" plain @click="openBuildingManager">管理楼栋</el-button>
     </div>
 
-=======
->>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
     <div class="room-section" v-if="rooms.length > 0">
       <h3 class="section-title">自习室列表</h3>
       <el-row :gutter="16">
@@ -121,7 +106,6 @@
       <el-empty v-else description="暂无座位数据" :image-size="80" />
 
       <!-- 座位属性面板 -->
-<<<<<<< HEAD
   <div v-if="selectedSeat" class="seat-props">
   <el-divider />
   <h4>修改座位 {{ selectedSeat.code }} 属性</h4>
@@ -275,30 +259,6 @@
         <el-button v-if="isEditingRoom" type="danger" @click="removeRoom(roomForm)">删除</el-button>
         <el-button type="primary" @click="saveRoom">保存</el-button>
       </template>
-=======
-      <div v-if="selectedSeat" class="seat-props">
-        <el-divider />
-        <h4>修改座位 {{ selectedSeat.code }} 属性</h4>
-        <el-row :gutter="20" align="middle">
-          <el-col :span="12">
-            <el-form-item label="状态">
-              <el-select v-model="selectedSeat.status" @change="updateSeat" style="width:100%">
-                <el-option label="可用" value="available" />
-                <el-option label="维护中" value="maintenance" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-checkbox
-              v-model="selectedSeat.power_socket"
-              @change="updateSeat"
-              label="有电源插座"
-              border
-            />
-          </el-col>
-        </el-row>
-      </div>
->>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
     </el-dialog>
 
     <!-- 重置座位布局弹窗 -->
@@ -337,10 +297,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { OfficeBuilding, RefreshRight } from '@element-plus/icons-vue';
 import request from '../../api';
-<<<<<<< HEAD
 import { runBackgroundScan, manualReleaseSeat } from '@/api/admin';
-=======
->>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 
 const query = reactive({ campus: '', building: '', floor: '' });
 const buildings = ref([]);
@@ -404,7 +361,6 @@ const updateSeat = async () => {
   }
 };
 
-<<<<<<< HEAD
 // 后台扫描
 const handleBackgroundScan = async () => {
   try {
@@ -439,8 +395,6 @@ const handleManualRelease = async (seat) => {
   }
 };
 
-=======
->>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 const openRegenerateModal = () => { showRegenerateModal.value = true; };
 
 const regenerateSeats = async () => {
@@ -455,7 +409,6 @@ const regenerateSeats = async () => {
 };
 
 onMounted(() => { fetchBuildings(); });
-<<<<<<< HEAD
 
 // 楼栋管理
 const showBuildingManager = ref(false);
@@ -652,8 +605,6 @@ const removeRoom = async (room) => {
   } catch (e) { ElMessage.error('删除失败: ' + (e.response?.data?.message || '未知错误')); }
 };
 
-=======
->>>>>>> e66bf7304e86bfe230045863566abd33c8ff3c55
 </script>
 
 <style scoped>

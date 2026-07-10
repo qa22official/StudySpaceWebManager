@@ -35,10 +35,10 @@
     <!-- 2. 时间与操作栏 -->
     <div class="action-bar" v-if="selectedRoom">
       <div class="time-picker">
-        <input type="date" v-model="query.date" :min="today" @change="fetchSeats" />
+        <input type="date" v-model="query.date" :min="today" @change="onDateChange" />
         <span> ~ </span>
         <select v-model="query.start_time" @change="onStartTimeChange">
-          <option v-for="t in allTimeSlots" :key="t" :value="t">{{ t }}</option>
+          <option v-for="t in filteredStartTimes" :key="t" :value="t">{{ t }}</option>
         </select>
         <span> 至 </span>
         <select v-model="query.end_time" @change="fetchSeats">
@@ -120,8 +120,35 @@ const isBlacklisted = ref(false);
 // 当天日期，禁止选择过去
 const today = new Date().toISOString().split('T')[0];
 
-// 所有可选时间段
-const allTimeSlots = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+// 所有可选时间段 (5分钟间隔，从08:00到22:00)
+const allTimeSlots = (() => {
+  const slots = [];
+  for (let h = 8; h <= 22; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      if (h === 22 && m > 0) break;
+      const hh = h.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
+      slots.push(`${hh}:${mm}`);
+    }
+  }
+  return slots;
+})();
+
+// 可选开始时间，如果在今天，必须晚于当前时间
+const filteredStartTimes = computed(() => {
+  if (query.value.date === today) {
+    const now = new Date();
+    const nowHour = now.getHours();
+    const nowMinute = now.getMinutes();
+    return allTimeSlots.filter(t => {
+      const [tH, tM] = t.split(':').map(Number);
+      if (tH > nowHour) return true;
+      if (tH === nowHour && tM > nowMinute) return true;
+      return false;
+    });
+  }
+  return allTimeSlots;
+});
 
 // 结束时间必须晚于开始时间
 const filteredEndTimes = computed(() =>
@@ -213,7 +240,25 @@ const handleBuildingChange = () => {
 const onStartTimeChange = () => {
   if (query.value.end_time <= query.value.start_time) {
     const idx = allTimeSlots.indexOf(query.value.start_time);
-    query.value.end_time = allTimeSlots[idx + 1] || allTimeSlots[allTimeSlots.length - 1];
+    // 默认往后推1小时（12个5分钟）
+    query.value.end_time = allTimeSlots[idx + 12] || allTimeSlots[allTimeSlots.length - 1];
+  }
+  fetchSeats();
+};
+
+const onDateChange = () => {
+  if (query.value.date === today) {
+    const now = new Date();
+    const nowHour = now.getHours();
+    const nowMinute = now.getMinutes();
+    const [currentStartHour, currentStartMinute] = query.value.start_time.split(':').map(Number);
+    
+    if ((currentStartHour < nowHour || (currentStartHour === nowHour && currentStartMinute <= nowMinute)) && filteredStartTimes.value.length > 0) {
+      query.value.start_time = filteredStartTimes.value[0];
+      const idx = allTimeSlots.indexOf(query.value.start_time);
+      // 默认往后推1小时（12个5分钟）
+      query.value.end_time = allTimeSlots[idx + 12] || allTimeSlots[allTimeSlots.length - 1];
+    }
   }
   fetchSeats();
 };
