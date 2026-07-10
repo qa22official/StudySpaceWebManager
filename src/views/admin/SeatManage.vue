@@ -86,21 +86,27 @@
         </div>
       </template>
 
-      <!-- 座位网格 -->
-      <div class="seat-grid" v-if="seats.length > 0">
-        <div
-          v-for="seat in seats"
-          :key="seat.id"
-          class="seat-box"
-          :class="{
-            available: seat.status === 'available',
-            maintenance: seat.status === 'maintenance',
-            selected: seat.id === selectedSeat?.id
-          }"
-          @click="selectSeat(seat)"
-        >
-          <span class="seat-code">{{ seat.code }}</span>
-          <span v-if="seat.power_socket" class="power-icon" title="有电源">⚡</span>
+      <!-- 座位网格 (按行分组排布) -->
+      <div class="seat-map-container" v-if="groupedSeats.length > 0">
+        <div v-for="(rowSeats, rowIndex) in groupedSeats" :key="rowIndex" class="seat-row">
+          <div class="row-label">第 {{ rowSeats[0]?.row || rowIndex + 1 }} 排</div>
+          <div class="seats-wrapper">
+            <div
+              v-for="seat in rowSeats"
+              :key="seat.id"
+              class="seat-box"
+              :class="{
+                available: seat.status === 'available',
+                maintenance: seat.status === 'maintenance',
+                occupied: seat.status === 'occupied',
+                selected: seat.id === selectedSeat?.id
+              }"
+              @click="selectSeat(seat)"
+            >
+              <span class="seat-code">{{ seat.code }}</span>
+              <span v-if="seat.power_socket" class="power-icon" title="有电源">⚡</span>
+            </div>
+          </div>
         </div>
       </div>
       <el-empty v-else description="暂无座位数据" :image-size="80" />
@@ -307,6 +313,16 @@ const seats = ref([]);
 const selectedSeat = ref(null);
 const loading = ref(false);
 
+const groupedSeats = computed(() => {
+  if (!seats.value.length) return [];
+  const rowNumbers = [...new Set(seats.value.map(s => s.row))].sort((a, b) => a - b);
+  return rowNumbers.map(rowNum => {
+    return seats.value
+      .filter(s => s.row === rowNum)
+      .sort((a, b) => a.col - b.col);
+  });
+});
+
 const showRegenerateModal = ref(false);
 const regenerateForm = reactive({ total_seats: 24, columns: 6 });
 const today = new Date().toISOString().split('T')[0];
@@ -340,8 +356,13 @@ const fetchRooms = async () => {
 const selectRoom = async (room) => {
   selectedRoom.value = room;
   try {
+    const now = new Date();
+    const nowHour = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    now.setMinutes(now.getMinutes() + 5);
+    const endHour = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
     const res = await request.get(`/rooms/${room.id}/seats`, {
-      params: { date: today, start_time: '09:00', end_time: '10:00' }
+      params: { date: today, start_time: nowHour, end_time: endHour }
     });
     seats.value = res.data?.data || res.data || [];
   } catch (e) { ElMessage.error('获取座位列表失败'); }
@@ -702,13 +723,29 @@ const removeRoom = async (room) => {
   font-size: 16px;
 }
 
-/* 座位网格 */
-.seat-grid {
+/* 座位网格排布 */
+.seat-map-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
   padding: 20px 0;
+}
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.row-label {
+  width: 60px;
+  text-align: right;
+  font-size: 13px;
+  color: #909399;
+  font-weight: 500;
+}
+.seats-wrapper {
+  display: flex;
+  gap: 10px;
 }
 .seat-box {
   width: 50px;
@@ -742,6 +779,11 @@ const removeRoom = async (room) => {
   color: #c0c4cc;
   cursor: not-allowed;
   text-decoration: line-through;
+}
+.seat-box.occupied {
+  background: #fef0f0;
+  border-color: #fde2e2;
+  color: #f56c6c;
 }
 .seat-box.selected {
   background: #ecf5ff;
