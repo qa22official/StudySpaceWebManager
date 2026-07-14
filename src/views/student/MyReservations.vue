@@ -107,7 +107,7 @@ const loadRoomNames = async () => {
     const res = await getAllRooms();
     const rooms = res.data?.data || res.data || [];
     const map = {};
-    rooms.forEach((r) => { map[r.id] = r.name || r.id; });
+    rooms.forEach((r) => { map[r.id] = `${r.campus} ${r.building} ${r.name}`; });
     roomMap.value = map;
   } catch (e) { console.error('加载自习室名称失败:', e); }
 };

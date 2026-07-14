@@ -18,6 +18,7 @@
           <option value="">全部</option>
           <option value="active">待签到 (Active)</option>
           <option value="checked_in">使用中 (Checked In)</option>
+          <option value="completed">已完成 (Completed)</option>
           <option value="cancelled">已取消 (Cancelled)</option>
           <option value="no_show">未签到 (No Show)</option>
           <option value="released">已释放 (Released)</option>
@@ -55,8 +56,8 @@
             <div class="location-info">
               <span class="icon">📍</span>
               <!-- 严格使用接口返回字段 -->
-              <span class="room-name">{{ item.room_id }}</span> 
-              <span class="seat-code">{{ item.seat_id }}</span>
+              <span class="room-name">{{ getRoomName(item.room_id) }}</span> 
+              <span class="seat-code">{{ getSeatLabel(item.seat_id) }}</span>
             </div>
             <div class="meta-info">
                预约人: {{ item.student_name }}
@@ -79,6 +80,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { getReservations } from '@/api/reservation';
+import { getAllRooms } from '@/api/dashboard';
 
 const loading = ref(false);
 const queryParams = reactive({
@@ -106,14 +108,37 @@ const fetchData = async () => {
 
 const handleSearch = () => { fetchData(); };
 
+const roomMap = ref({});
+
+const loadRoomNames = async () => {
+  try {
+    const res = await getAllRooms();
+    const rooms = res.data?.data || res.data || [];
+    const map = {};
+    rooms.forEach((r) => { 
+      map[r.id] = `${r.campus} ${r.building} ${r.name}`; 
+    });
+    roomMap.value = map;
+  } catch (e) { console.error('加载自习室名称失败:', e); }
+};
+
+const getRoomName = (roomId) => roomMap.value[roomId] || roomId;
+const getSeatLabel = (seatId) => {
+  if (!seatId) return '-';
+  const parts = seatId.split('_seat_');
+  return parts.length > 1 ? `${parts[1]}号座位` : seatId;
+};
+
 const getStatusText = (status) => {
-  const map = { active:'待签到', checked_in:'使用中', cancelled:'已取消', no_show:'未签到', released:'已释放' };
+  const map = { active:'待签到', checked_in:'使用中', completed:'已完成', cancelled:'已取消', no_show:'未签到', released:'已释放' };
   return map[status] || status;
 };
 
 const getStatusClass = (status) => { return `status-${status}`; };
 
-onMounted(() => { fetchData(); });
+onMounted(() => { 
+  loadRoomNames().then(() => fetchData()); 
+});
 </script>
 
 <style scoped>
@@ -265,6 +290,7 @@ onMounted(() => { fetchData(); });
 
 .status-active { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
 .status-checked_in { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.status-completed { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
 .status-cancelled { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
 .status-no_show { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
 .status-released { background: #f5f5f5; color: #8c8c8c; border: 1px solid #d9d9d9; }
