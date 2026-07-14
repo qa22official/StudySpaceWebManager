@@ -57,7 +57,7 @@
               <span class="icon">📍</span>
               <!-- 严格使用接口返回字段 -->
               <span class="room-name">{{ getRoomName(item.room_id) }}</span> 
-              <span class="seat-code">{{ getSeatLabel(item.seat_id) }}</span>
+              <span class="seat-code">{{ getSeatLabel(item) }}</span>
             </div>
             <div class="meta-info">
                预约人: {{ item.student_name }}
@@ -123,10 +123,12 @@ const loadRoomNames = async () => {
 };
 
 const getRoomName = (roomId) => roomMap.value[roomId] || roomId;
-const getSeatLabel = (seatId) => {
+const getSeatLabel = (item) => {
+  if (item.seat_code) return item.seat_code;
+  const seatId = item.seat_id;
   if (!seatId) return '-';
   const parts = seatId.split('_seat_');
-  return parts.length > 1 ? `${parts[1]}号座位` : seatId;
+  return parts.length > 1 ? parts[1] : seatId;
 };
 
 const getStatusText = (status) => {

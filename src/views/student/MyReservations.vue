@@ -35,8 +35,8 @@
             <span class="value highlight">{{ getRoomName(item.room_id) }}</span>
           </div>
           <div class="info-row">
-            <span class="label">座位号：</span>
-            <span class="value highlight">{{ getSeatLabel(item.seat_id) }}</span>
+              <span class="label">座位：</span>
+              <span class="value highlight">{{ getSeatLabel(item) }}</span>
           </div>
           <div class="info-row">
             <span class="label">时间段：</span>
@@ -113,7 +113,9 @@ const loadRoomNames = async () => {
 };
 
 const getRoomName = (roomId) => roomMap.value[roomId] || roomId;
-const getSeatLabel = (seatId) => {
+const getSeatLabel = (item) => {
+  if (item.seat_code) return item.seat_code;
+  const seatId = item.seat_id;
   if (!seatId) return '-';
   const parts = seatId.split('_seat_');
   return parts.length > 1 ? parts[1] : seatId;

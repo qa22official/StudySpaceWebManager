@@ -77,7 +77,7 @@
             <div class="location-info">
               <span class="icon">📍</span>
               <span class="room-name">{{ getRoomName(item.room_id) }}</span> 
-              <span class="seat-code">{{ getSeatLabel(item.seat_id) }}</span>
+              <span class="seat-code">{{ getSeatLabel(item) }}</span>
             </div>
             <!-- 如果有释放原因，显示在这里 -->
             <div v-if="item.reason" class="reason-text">
@@ -191,10 +191,12 @@ const loadRoomNames = async () => {
 };
 
 const getRoomName = (roomId) => roomMap.value[roomId] || roomId;
-const getSeatLabel = (seatId) => {
+const getSeatLabel = (item) => {
+  if (item.seat_code) return item.seat_code;
+  const seatId = item.seat_id;
   if (!seatId) return '-';
   const parts = seatId.split('_seat_');
-  return parts.length > 1 ? `${parts[1]}号座位` : seatId;
+  return parts.length > 1 ? parts[1] : seatId;
 };
 
 // 辅助函数：状态样式类名
